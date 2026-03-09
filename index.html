@@ -1,0 +1,854 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scotland Clues</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px 60px;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: #ffe6f0;
+            color: #3d2a33;
+        }
+
+        .page {
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0 0 16px;
+            font-size: 2.4rem;
+        }
+
+        .subtitle {
+            max-width: 820px;
+            margin: 0 auto 36px;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 28px;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .grid-wrap {
+            display: inline-block;
+            overflow-x: auto;
+            padding: 8px;
+            max-width: 100%;
+        }
+
+        .guess-panel {
+            width: 320px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            text-align: left;
+            position: sticky;
+            top: 20px;
+            margin-top: 56px; /* align with first row of buttons instead of column labels */
+        }
+
+            .guess-panel h2 {
+                margin: 0 0 10px;
+                font-size: 1.4rem;
+            }
+
+            .guess-panel p {
+                margin: 0 0 16px;
+                line-height: 1.45;
+            }
+
+            .guess-panel label {
+                display: block;
+                margin-bottom: 6px;
+                font-weight: bold;
+            }
+
+            .guess-panel select,
+            .guess-panel input,
+            .guess-panel button {
+                width: 100%;
+                padding: 12px 14px;
+                border-radius: 12px;
+                border: 1px solid #d9b6c5;
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .guess-panel button {
+                background: #ff6fa8;
+                color: white;
+                border: none;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+                .guess-panel button:hover {
+                    transform: translateY(-1px);
+                }
+
+        .guess-result {
+            min-height: 72px;
+            border-radius: 14px;
+            padding: 14px;
+            font-weight: bold;
+            display: none;
+            line-height: 1.4;
+        }
+
+            .guess-result.show {
+                display: block;
+            }
+
+            .guess-result.success {
+                background: #d9f7e5;
+                color: #175c35;
+            }
+
+            .guess-result.error {
+                background: #ffe1e1;
+                color: #8a1f1f;
+            }
+
+            .guess-result .devil {
+                font-size: 1.6rem;
+                margin-right: 8px;
+            }
+
+        .mistake-counter {
+            margin-top: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #fff0f5;
+            font-weight: bold;
+        }
+
+        .row-span-message {
+            grid-column: 2 / span 4;
+            height: 90px;
+            border: none;
+            border-radius: 14px;
+            background: #fff7c7;
+            color: #5a4300;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            padding: 10px 18px;
+            text-align: center;
+            line-height: 1.35;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 140px repeat(4, 140px);
+            grid-template-rows: 44px repeat(10, 90px);
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty {
+            visibility: hidden;
+        }
+
+        .col-label, .row-label {
+            font-weight: bold;
+        }
+
+        .col-label {
+            text-align: center;
+        }
+
+        .row-label {
+            text-align: right;
+            padding-right: 12px;
+        }
+
+        .card {
+            width: 140px;
+            height: 90px;
+            perspective: 800px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 14px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.3;
+        }
+
+        .card.flip .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .front.locked {
+            background: #e74c3c;
+            color: white;
+            cursor: pointer;
+        }
+
+        .front.unlocked {
+            background: #2ecc71;
+            color: white;
+            cursor: pointer;
+        }
+
+        .back {
+            background: white;
+            color: #333;
+            transform: rotateY(180deg);
+        }
+
+        .solved-card {
+            position: relative;
+            width: 140px;
+            height: 90px;
+            border-radius: 14px;
+            background: #fff7c7;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .solved-face {
+            position: absolute;
+            inset: 0;
+            background: #fff7c7;
+            color: #5a4300;
+            font-size: 13px;
+            font-weight: bold;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 14px;
+            pointer-events: none;
+            opacity: 0.95;
+            z-index: 9999;
+            animation: confetti-fall 1200ms ease-out forwards;
+            border-radius: 2px;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translate(0,0) rotate(0deg);
+                opacity: 0.95;
+            }
+
+            100% {
+                transform: translate(var(--dx), var(--dy)) rotate(var(--rot));
+                opacity: 0;
+            }
+        }
+
+        /* patience gif modal */
+
+        .gif-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .gif-modal-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: modal-bounce 0.45s ease;
+        }
+
+        .gif-modal h2 {
+            color: white;
+            margin: 0 0 14px;
+            max-width: 520px;
+        }
+
+        .gif-modal img {
+            max-width: 320px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+        }
+
+        .gif-subtext {
+            color: white;
+            margin-top: 14px;
+            font-size: 1rem;
+        }
+
+        .gif-close {
+            margin-top: 16px;
+            border: none;
+            border-radius: 999px;
+            padding: 10px 18px;
+            background: white;
+            color: #3d2a33;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+            .gif-close:hover {
+                transform: translateY(-1px);
+            }
+
+        .card.wiggle .card-inner {
+            animation: locked-wiggle 0.45s ease;
+        }
+
+        @keyframes modal-bounce {
+            0% {
+                transform: scale(0.85);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.04);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes locked-wiggle {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            20% {
+                transform: rotate(-4deg);
+            }
+
+            40% {
+                transform: rotate(4deg);
+            }
+
+            60% {
+                transform: rotate(-3deg);
+            }
+
+            80% {
+                transform: rotate(3deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page">
+
+        <h1>I wonder what we are going to get up to</h1>
+
+        <div class="subtitle">
+            Each day a new clue will unlock, giving you a little glimpse into what we will do in Scotland.
+            All the clues for each activity or location link together, and to work out the activity,
+            you need to find the connection between the clues.
+            <br><br>
+            You can guess at any time, you dont need all the clues, but you bet that I am going to make you pay for each and every mistake.
+            <br><br>
+            Good luck, I can't wait to spend all this time with you.
+        </div>
+
+        <div class="main-layout">
+            <div class="grid-wrap">
+                <div class="container" id="clue-grid"></div>
+            </div>
+
+            <aside class="guess-panel">
+                <h2>Make a guess</h2>
+                <p>Think you know one? Pick an activity or location and type your answer.</p>
+
+                <label for="guessTarget">What are you guessing?</label>
+                <select id="guessTarget"></select>
+
+                <label for="guessInput">Your guess</label>
+                <input id="guessInput" type="text" placeholder="Type your guess here" />
+
+                <button id="guessButton" type="button">Submit guess</button>
+
+                <div class="guess-result" id="guessResult"></div>
+                <div class="mistake-counter" id="mistakeCounter">Mistakes: 0</div>
+            </aside>
+        </div>
+
+    </div>
+
+    <div class="gif-modal" id="gifModal">
+        <div class="gif-modal-content" id="gifModalContent">
+            <h2 id="gifTitle"></h2>
+            <img id="gifImage" src="" alt="Waiting gif" />
+            <div class="gif-subtext">Try again tomorrow 😉</div>
+            <button class="gif-close" id="gifCloseBtn" type="button">Close</button>
+        </div>
+    </div>
+
+    <script>
+
+        const rowLabels = [
+        "Activity 1","Activity 2","Activity 3","Activity 4","Activity 5",
+        "Location 1","Location 2","Location 3","Location 4","Location 5"
+        ];
+
+        const clueCountPerRow = 4;
+        const grid = document.getElementById("clue-grid");
+        const guessTarget = document.getElementById("guessTarget");
+        const guessInput = document.getElementById("guessInput");
+        const guessButton = document.getElementById("guessButton");
+        const guessResult = document.getElementById("guessResult");
+        const mistakeCounter = document.getElementById("mistakeCounter");
+
+        function formatDate(date) {
+        return date.toLocaleDateString("en-GB", { day:"numeric", month:"long" });
+        }
+
+        function startOfDay(date) {
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        }
+
+        const clues = [
+        "Greenland","Paddle","Eskimo roll","Sit-on-top",
+        "Dorian","Bodhrán","Slip jig","Sets of three",
+        "Progressive dance","Eight hands","Figure caller","Social set",
+        "2001","Closed system","2 km","Plateau station",
+        "Campfire","Smoke","Marshmallow","Kindling",
+        "Stilts","Iron Age","Roundhouse","Loch Tay",
+        "1692","MacDonalds","Three Sisters","U-shaped valley",
+        "MacDougall","Lora","Sea-washed rock","Flora MacDonald",
+        "Green Loch","Fairies","Glenmore Forest","Cairngorms",
+        "Zaha Hadid","Transport","River Clyde","Tall ship"
+        ];
+
+        const clueDates = [
+        new Date(2026,2,9),new Date(2026,2,18),new Date(2026,3,2),new Date(2026,3,15),
+        new Date(2026,2,11),new Date(2026,2,24),new Date(2026,3,6),new Date(2026,3,17),
+        new Date(2026,2,13),new Date(2026,2,27),new Date(2026,3,8),new Date(2026,3,18),
+        new Date(2026,2,15),new Date(2026,2,28),new Date(2026,3,10),new Date(2026,3,4),
+        new Date(2026,2,16),new Date(2026,2,21),new Date(2026,3,11),new Date(2026,3,7),
+        new Date(2026,2,12),new Date(2026,2,25),new Date(2026,3,1),new Date(2026,3,12),
+        new Date(2026,2,14),new Date(2026,2,23),new Date(2026,3,3),new Date(2026,3,13),
+        new Date(2026,2,17),new Date(2026,2,26),new Date(2026,3,5),new Date(2026,3,14),
+        new Date(2026,2,19),new Date(2026,2,22),new Date(2026,2,29),new Date(2026,3,16),
+        new Date(2026,2,20),new Date(2026,2,30),new Date(2026,2,10),new Date(2026,3,9)
+        ];
+
+        const today = startOfDay(new Date());
+
+        const answers = [
+        { type: "activity", answer: "Sea Kayaking", reveal: "That's right we are going kayaking", aliases: ["kayaking", "sea kayaking", "sea kyacking", "kyaking", "kayak"] },
+        { type: "activity", answer: "Session", reveal: "That's right we are going to a session", aliases: ["session", "music session", "trad session", "folk session"] },
+        { type: "activity", answer: "Ceilidh", reveal: "That's right we are going to a ceilidh", aliases: ["ceilidh", "celidh", "ceildh", "ceili"] },
+        { type: "activity", answer: "Cairngorm Funicular", reveal: "That's right we are going on the Cairngorm funicular", aliases: ["cairngorm funicular", "funicular", "mountain railway", "cairngorm railway"] },
+        { type: "activity", answer: "Cookout in Woodland", reveal: "That's right we are having a cookout in the woodland", aliases: ["cookout in woodland", "cookout", "woodland cookout", "campfire cookout", "cook out"] },
+        { type: "location", answer: "Scottish Crannog Centre", reveal: "That's right we are going to the Scottish Crannog Centre", aliases: ["scottish crannog centre", "crannog centre", "crannog center", "crannog", "scottish cranog center", "scottish crannog center", "cranog center", "cranog centre"] },
+        { type: "location", answer: "Glen Coe", reveal: "That's right we are going to Glen Coe", aliases: ["glen coe", "glencoe"] },
+        { type: "location", answer: "Dunstaffnage Castle", reveal: "That's right we are going to Dunstaffnage Castle", aliases: ["dunstaffnage castle", "dunstaffnage"] },
+        { type: "location", answer: "Lochan Uaine", reveal: "That's right we are going to Lochan Uaine", aliases: ["lochan uaine", "green loch"] },
+        { type: "location", answer: "Glasgow Riverside Museum", reveal: "That's right we are going to the Glasgow Riverside Museum", aliases: ["glasgow riverside museum", "riverside museum", "glasgow museum"] }
+        ];
+
+        const rowCards = Array.from({ length: rowLabels.length }, () => []);
+        const rowSolvedState = loadSolvedState();
+        const rowMessageState = loadRowMessageState();
+        let mistakeState = loadMistakeState();
+
+        /* patience gifs + titles */
+
+        const patienceTitles = [
+        "Oi, calm down",
+        "You know you like it when I make you wait for it",
+        "Patience",
+        "Someone's eager",
+        "If you really cant wait till tomorrow text me something cute!",
+        "I'm sure you can wait just a little longer"
+        ];
+
+        /* gifs specifically about waiting / patience */
+        const patienceGifs = [
+        "https://media.giphy.com/media/3o6ZtaO9BZHcOjmErm/giphy.gif",
+        "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
+        "https://media.giphy.com/media/xT0xeJpnrWC4XWblEk/giphy.gif",
+        "https://media.giphy.com/media/26BRuo6sLetdllPAQ/giphy.gif",
+        "https://media.giphy.com/media/QBd2kLB5qDmysEXre9/giphy.gif",
+        "https://media.giphy.com/media/l4FGpP4lxGGgK5CBW/giphy.gif",
+        "https://media.giphy.com/media/3o7btPCcdNniyf0ArS/giphy.gif",
+        "https://media.giphy.com/media/l3vR85PnGsBwu1PFK/giphy.gif",
+        "https://media.giphy.com/media/26BRrSvJUa0crqw4E/giphy.gif",
+        "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif"
+        ];
+
+        const modal = document.getElementById("gifModal");
+        const modalContent = document.getElementById("gifModalContent");
+        const gifImage = document.getElementById("gifImage");
+        const gifTitle = document.getElementById("gifTitle");
+        const gifCloseBtn = document.getElementById("gifCloseBtn");
+
+        function closePatienceGif(){
+        modal.style.display = "none";
+        }
+
+        modal.addEventListener("click",()=>{
+        closePatienceGif();
+        });
+
+        modalContent.addEventListener("click",(event)=>{
+        event.stopPropagation();
+        });
+
+        gifCloseBtn.addEventListener("click",()=>{
+        closePatienceGif();
+        });
+
+        function showPatienceGif(){
+        const gif = patienceGifs[Math.floor(Math.random()*patienceGifs.length)];
+        const title = patienceTitles[Math.floor(Math.random()*patienceTitles.length)];
+
+        gifImage.src = gif;
+        gifTitle.textContent = title;
+
+        modal.style.display = "flex";
+        }
+
+        /* confetti */
+
+        function createConfettiBurst(target){
+        const rect=target.getBoundingClientRect();
+        const x=rect.left+rect.width/2;
+        const y=rect.top+rect.height/2;
+
+        for(let i=0;i<28;i++){
+        const piece=document.createElement("div");
+        piece.className="confetti";
+        piece.style.left=`${x}px`;
+        piece.style.top=`${y}px`;
+
+        const colors=["#ff4d6d","#ffbe0b","#3a86ff","#8338ec","#2ecc71","#ffffff"];
+        piece.style.background=colors[Math.floor(Math.random()*colors.length)];
+
+        piece.style.setProperty("--dx",`${(Math.random()-0.5)*220}px`);
+        piece.style.setProperty("--dy",`${80+Math.random()*180}px`);
+        piece.style.setProperty("--rot",`${Math.random()*720-360}deg`);
+
+        document.body.appendChild(piece);
+        piece.addEventListener("animationend",()=>piece.remove());
+        }
+        }
+
+        /* remember flipped cards */
+
+        const STORAGE_KEY="scotland-clues-flipped";
+        const SOLVED_STORAGE_KEY="scotland-clues-solved";
+        const ROW_MESSAGE_STORAGE_KEY="scotland-clues-row-message";
+        const MISTAKE_STORAGE_KEY="scotland-clues-mistakes";
+
+        function loadState(){
+        try{
+        return JSON.parse(localStorage.getItem(STORAGE_KEY))||{};
+        }catch{ return {}; }
+        }
+
+        function saveState(state){
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+        }
+
+        function loadSolvedState(){
+        try{
+        return JSON.parse(localStorage.getItem(SOLVED_STORAGE_KEY))||{};
+        }catch{ return {}; }
+        }
+
+        function saveSolvedState(state){
+        localStorage.setItem(SOLVED_STORAGE_KEY,JSON.stringify(state));
+        }
+
+        function loadRowMessageState(){
+        try{
+        return JSON.parse(localStorage.getItem(ROW_MESSAGE_STORAGE_KEY))||{};
+        }catch{ return {}; }
+        }
+
+        function saveRowMessageState(state){
+        localStorage.setItem(ROW_MESSAGE_STORAGE_KEY,JSON.stringify(state));
+        }
+
+        function loadMistakeState(){
+        try{
+        const value = JSON.parse(localStorage.getItem(MISTAKE_STORAGE_KEY));
+        return Number.isFinite(value) ? value : 0;
+        }catch{ return 0; }
+        }
+
+        function saveMistakeState(value){
+        localStorage.setItem(MISTAKE_STORAGE_KEY, JSON.stringify(value));
+        }
+
+        const flippedState=loadState();
+
+        function normaliseText(text){
+        return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+        }
+
+        function levenshtein(a, b){
+        const m = a.length;
+        const n = b.length;
+        const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+        for(let i = 0; i <= m; i++) dp[i][0] = i;
+        for(let j = 0; j <= n; j++) dp[0][j] = j;
+
+        for(let i = 1; i <= m; i++){
+        for(let j = 1; j <= n; j++){
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+        );
+        }
+        }
+
+        return dp[m][n];
+        }
+
+        function isCloseMatch(guess, candidate){
+        const g = normaliseText(guess);
+        const c = normaliseText(candidate);
+
+        if(!g || !c) return false;
+        if(g === c) return true;
+        if(c.includes(g) || g.includes(c)) return true;
+
+        const distance = levenshtein(g, c);
+        const threshold = c.length <= 6 ? 1 : c.length <= 12 ? 2 : 3;
+        return distance <= threshold;
+        }
+
+        function guessMatchesAnswer(guess, answerObj){
+        return answerObj.aliases.some(alias => isCloseMatch(guess, alias));
+        }
+
+        function showGuessResult(message, type){
+        guessResult.className = `guess-result show ${type}`;
+        guessResult.innerHTML = type === "error"
+        ? `<span class="devil">😈</span>Im going to make you regrett that mistake`
+        : message;
+        }
+
+        function updateMistakeCounter(){
+        mistakeCounter.textContent = `Mistakes: ${mistakeState}`;
+        }
+
+        function replaceRowWithMessage(rowIndex, message){
+        rowCards[rowIndex].forEach((card, index) => {
+        if(index === 0){
+        card.innerHTML = "";
+        card.className = "row-span-message";
+        card.textContent = message;
+        card.style.perspective = "none";
+        } else {
+        card.remove();
+        }
+        });
+        }
+
+        function populateGuessOptions(){
+        rowLabels.forEach((label, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = label;
+        guessTarget.appendChild(option);
+        });
+        }
+
+        function handleGuess(){
+        const rowIndex = Number(guessTarget.value);
+        const guess = guessInput.value.trim();
+
+        if(!guess){
+        showGuessResult("Type a guess first", "error");
+        return;
+        }
+
+        const answerObj = answers[rowIndex];
+
+        if(guessMatchesAnswer(guess, answerObj)){
+        const message = answerObj.reveal;
+        rowSolvedState[rowIndex] = true;
+        rowMessageState[rowIndex] = message;
+        saveSolvedState(rowSolvedState);
+        saveRowMessageState(rowMessageState);
+        replaceRowWithMessage(rowIndex, message);
+        createConfettiBurst(rowCards[rowIndex][0]);
+        showGuessResult(message, "success");
+        } else {
+        mistakeState += 1;
+        saveMistakeState(mistakeState);
+        updateMistakeCounter();
+        showGuessResult("wrong", "error");
+        }
+        }
+
+        populateGuessOptions();
+        updateMistakeCounter();
+        guessButton.addEventListener("click", handleGuess);
+        guessInput.addEventListener("keydown", (event) => {
+        if(event.key === "Enter") handleGuess();
+        });
+
+        /* build grid */
+
+        const emptyCell=document.createElement("div");
+        emptyCell.className="empty";
+        grid.appendChild(emptyCell);
+
+        for(let col=1; col<=clueCountPerRow; col++){
+        const label=document.createElement("div");
+        label.className="col-label";
+        label.textContent=`Clue ${col}`;
+        grid.appendChild(label);
+        }
+
+        rowLabels.forEach((label,rowIndex)=>{
+
+        const rowLabel=document.createElement("div");
+        rowLabel.className="row-label";
+        rowLabel.textContent=label;
+        grid.appendChild(rowLabel);
+
+        for(let colIndex=0; colIndex<clueCountPerRow; colIndex++){
+
+        const clueIndex=rowIndex*clueCountPerRow+colIndex;
+        const unlockDate=startOfDay(clueDates[clueIndex]);
+
+        const isUnlocked = clueIndex === 0; // testing: only first clue unlocked
+        const wasFlipped = flippedState[clueIndex] === true;
+
+        const card=document.createElement("div");
+        card.className="card";
+        rowCards[rowIndex].push(card);
+
+        if(wasFlipped){
+        card.classList.add("flip");
+        }
+
+        const inner=document.createElement("div");
+        inner.className="card-inner";
+
+        const front=document.createElement("div");
+        front.className="card-face front " + (isUnlocked ? "unlocked" : "locked");
+
+        if(isUnlocked){
+        front.textContent="Reveal clue";
+        } else {
+        front.textContent=`Unlocks on the ${formatDate(unlockDate)}`;
+        }
+
+        const back=document.createElement("div");
+        back.className="card-face back";
+        back.textContent=clues[clueIndex];
+
+        inner.appendChild(front);
+        inner.appendChild(back);
+        card.appendChild(inner);
+
+        if(rowSolvedState[rowIndex]){
+        replaceRowWithMessage(rowIndex, rowMessageState[rowIndex] || answers[rowIndex].reveal);
+        } else {
+        card.addEventListener("click",()=>{
+
+        if(!isUnlocked){
+        card.classList.remove("wiggle");
+        void card.offsetWidth;
+        card.classList.add("wiggle");
+        setTimeout(()=>card.classList.remove("wiggle"), 500);
+        showPatienceGif();
+        return;
+        }
+
+        const nowFlipped=!card.classList.contains("flip");
+        card.classList.toggle("flip");
+
+        flippedState[clueIndex]=nowFlipped;
+        saveState(flippedState);
+
+        if(nowFlipped){
+        createConfettiBurst(card);
+        }
+
+        });
+        }
+
+        grid.appendChild(card);
+
+        }
+
+        if(rowSolvedState[rowIndex]){
+        replaceRowWithMessage(rowIndex, rowMessageState[rowIndex] || answers[rowIndex].reveal);
+        }
+
+        });
+
+    </script>
+
+</body>
+</html>
