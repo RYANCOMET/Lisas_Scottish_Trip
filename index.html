@@ -780,7 +780,7 @@
         const clueIndex=rowIndex*clueCountPerRow+colIndex;
         const unlockDate=startOfDay(clueDates[clueIndex]);
 
-        const isUnlocked = clueIndex === 0; // testing: only first clue unlocked
+        const isUnlocked = today >= unlockDate;
         const wasFlipped = flippedState[clueIndex] === true;
 
         const card=document.createElement("div");
@@ -852,3 +852,4 @@
 
 </body>
 </html>
+
