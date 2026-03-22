@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -60,7 +60,7 @@
             text-align: left;
             position: sticky;
             top: 20px;
-            margin-top: 56px; /* align with first row of buttons instead of column labels */
+            margin-top: 56px;
         }
 
             .guess-panel h2 {
@@ -101,6 +101,10 @@
                 .guess-panel button:hover {
                     transform: translateY(-1px);
                 }
+
+        .test-button {
+            background: #333 !important;
+        }
 
         .guess-result {
             min-height: 72px;
@@ -160,7 +164,7 @@
         .container {
             display: grid;
             grid-template-columns: 140px repeat(4, 140px);
-            grid-template-rows: 44px repeat(10, 90px);
+            grid-template-rows: 44px repeat(10, 90px) 110px;
             gap: 12px;
             align-items: center;
             justify-content: center;
@@ -238,31 +242,6 @@
             transform: rotateY(180deg);
         }
 
-        .solved-card {
-            position: relative;
-            width: 140px;
-            height: 90px;
-            border-radius: 14px;
-            background: #fff7c7;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-
-        .solved-face {
-            position: absolute;
-            inset: 0;
-            background: #fff7c7;
-            color: #5a4300;
-            font-size: 13px;
-            font-weight: bold;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            text-align: center;
-            line-height: 1.3;
-        }
-
         .confetti {
             position: fixed;
             width: 10px;
@@ -285,8 +264,6 @@
                 opacity: 0;
             }
         }
-
-        /* patience gif modal */
 
         .gif-modal {
             position: fixed;
@@ -387,6 +364,38 @@
                 transform: rotate(0deg);
             }
         }
+
+        .final-adventure-button {
+            grid-column: 1 / span 5;
+            height: 110px;
+            border: none;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #ff6fa8, #ff9ec4);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 18px;
+            line-height: 1.35;
+        }
+
+            .final-adventure-button:hover {
+                transform: translateY(-2px);
+            }
+
+            .final-adventure-button.locked {
+                cursor: default;
+                background: linear-gradient(135deg, #8e6b78, #b98ca1);
+            }
+
+            .final-adventure-button:disabled {
+                opacity: 1;
+            }
     </style>
 </head>
 <body>
@@ -400,7 +409,7 @@
             All the clues for each activity or location link together, and to work out the activity,
             you need to find the connection between the clues.
             <br><br>
-            You can guess at any time, you dont need all the clues, but you bet that I am going to make you pay for each and every mistake.
+            You can guess at any time, you don't need all the clues, but you bet that I am going to make you pay for each and every mistake.
             <br><br>
             Good luck, I can't wait to spend all this time with you.
         </div>
@@ -421,6 +430,7 @@
                 <input id="guessInput" type="text" placeholder="Type your guess here" />
 
                 <button id="guessButton" type="button">Submit guess</button>
+                <button id="revealAllBtn" type="button" class="test-button">Reveal All (TEST)</button>
 
                 <div class="guess-result" id="guessResult"></div>
                 <div class="mistake-counter" id="mistakeCounter">Mistakes: 0</div>
@@ -439,7 +449,6 @@
     </div>
 
     <script>
-
         const rowLabels = [
         "Activity 1","Activity 2","Activity 3","Activity 4","Activity 5",
         "Location 1","Location 2","Location 3","Location 4","Location 5"
@@ -450,11 +459,12 @@
         const guessTarget = document.getElementById("guessTarget");
         const guessInput = document.getElementById("guessInput");
         const guessButton = document.getElementById("guessButton");
+        const revealAllBtn = document.getElementById("revealAllBtn");
         const guessResult = document.getElementById("guessResult");
         const mistakeCounter = document.getElementById("mistakeCounter");
 
         function formatDate(date) {
-        return date.toLocaleDateString("en-GB", { day:"numeric", month:"long" });
+        return date.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
         }
 
         function startOfDay(date) {
@@ -468,7 +478,7 @@
         "2001","Closed system","2 km","Plateau station",
         "Campfire","Smoke","Marshmallow","Kindling",
         "Stilts","Iron Age","Roundhouse","Loch Tay",
-        "1863","Fire","Herritage","Spey",
+        "1864","Spey","Coal","Blaze Gentleman",
         "MacDougall","Lora","Sea-washed rock","Flora MacDonald",
         "Green Loch","Fairies","Glenmore Forest","Cairngorms",
         "Zaha Hadid","Transport","River Clyde","Tall ship"
@@ -496,18 +506,86 @@
         { type: "activity", answer: "Cairngorm Funicular", reveal: "That's right we are going on the Cairngorm funicular", aliases: ["cairngorm funicular", "funicular", "mountain railway", "cairngorm railway"] },
         { type: "activity", answer: "Cookout in Woodland", reveal: "That's right we are having a cookout in the woodland", aliases: ["cookout in woodland", "cookout", "woodland cookout", "campfire cookout", "cook out"] },
         { type: "location", answer: "Scottish Crannog Centre", reveal: "That's right we are going to the Scottish Crannog Centre", aliases: ["scottish crannog centre", "crannog centre", "crannog center", "crannog", "scottish cranog center", "scottish crannog center", "cranog center", "cranog centre"] },
-        { type: "location", answer: "Glen Coe", reveal: "That's right we are going to Glen Coe", aliases: ["glen coe", "glencoe"] },
+        { type: "location", answer: "Strathspey Railway", reveal: "That's right we are going on the Strathspey Railway", aliases: ["strathspey railway", "strath spey railway", "heritage railway", "herritage railway"] },
         { type: "location", answer: "Dunstaffnage Castle", reveal: "That's right we are going to Dunstaffnage Castle", aliases: ["dunstaffnage castle", "dunstaffnage"] },
         { type: "location", answer: "Lochan Uaine", reveal: "That's right we are going to Lochan Uaine", aliases: ["lochan uaine", "green loch"] },
         { type: "location", answer: "Glasgow Riverside Museum", reveal: "That's right we are going to the Glasgow Riverside Museum", aliases: ["glasgow riverside museum", "riverside museum", "glasgow museum"] }
         ];
 
         const rowCards = Array.from({ length: rowLabels.length }, () => []);
+
+        const STORAGE_KEY = "scotland-clues-flipped";
+        const SOLVED_STORAGE_KEY = "scotland-clues-solved";
+        const ROW_MESSAGE_STORAGE_KEY = "scotland-clues-row-message";
+        const MISTAKE_STORAGE_KEY = "scotland-clues-mistakes";
+        const WRONG_GUESSES_STORAGE_KEY = "scotland-clues-wrong-guesses";
+
+        function loadState() {
+        try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        } catch {
+        return {};
+        }
+        }
+
+        function saveState(state) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function loadSolvedState() {
+        try {
+        return JSON.parse(localStorage.getItem(SOLVED_STORAGE_KEY)) || {};
+        } catch {
+        return {};
+        }
+        }
+
+        function saveSolvedState(state) {
+        localStorage.setItem(SOLVED_STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function loadRowMessageState() {
+        try {
+        return JSON.parse(localStorage.getItem(ROW_MESSAGE_STORAGE_KEY)) || {};
+        } catch {
+        return {};
+        }
+        }
+
+        function saveRowMessageState(state) {
+        localStorage.setItem(ROW_MESSAGE_STORAGE_KEY, JSON.stringify(state));
+        }
+
+        function loadMistakeState() {
+        try {
+        const value = JSON.parse(localStorage.getItem(MISTAKE_STORAGE_KEY));
+        return Number.isFinite(value) ? value : 0;
+        } catch {
+        return 0;
+        }
+        }
+
+        function saveMistakeState(value) {
+        localStorage.setItem(MISTAKE_STORAGE_KEY, JSON.stringify(value));
+        }
+
+        function loadWrongGuessesState() {
+        try {
+        return JSON.parse(localStorage.getItem(WRONG_GUESSES_STORAGE_KEY)) || {};
+        } catch {
+        return {};
+        }
+        }
+
+        function saveWrongGuessesState(state) {
+        localStorage.setItem(WRONG_GUESSES_STORAGE_KEY, JSON.stringify(state));
+        }
+
+        const flippedState = loadState();
         const rowSolvedState = loadSolvedState();
         const rowMessageState = loadRowMessageState();
+        const wrongGuessesState = loadWrongGuessesState();
         let mistakeState = loadMistakeState();
-
-        /* patience gifs + titles */
 
         const patienceTitles = [
         "Oi, calm down",
@@ -518,7 +596,6 @@
         "I'm sure you can wait just a little longer"
         ];
 
-        /* gifs specifically about waiting / patience */
         const patienceGifs = [
         "https://media.giphy.com/media/3o6ZtaO9BZHcOjmErm/giphy.gif",
         "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
@@ -538,126 +615,73 @@
         const gifTitle = document.getElementById("gifTitle");
         const gifCloseBtn = document.getElementById("gifCloseBtn");
 
-        function closePatienceGif(){
+        function closePatienceGif() {
         modal.style.display = "none";
         }
 
-        modal.addEventListener("click",()=>{
+        modal.addEventListener("click", () => {
         closePatienceGif();
         });
 
-        modalContent.addEventListener("click",(event)=>{
+        modalContent.addEventListener("click", (event) => {
         event.stopPropagation();
         });
 
-        gifCloseBtn.addEventListener("click",()=>{
+        gifCloseBtn.addEventListener("click", () => {
         closePatienceGif();
         });
 
-        function showPatienceGif(){
-        const gif = patienceGifs[Math.floor(Math.random()*patienceGifs.length)];
-        const title = patienceTitles[Math.floor(Math.random()*patienceTitles.length)];
+        function showPatienceGif() {
+        const gif = patienceGifs[Math.floor(Math.random() * patienceGifs.length)];
+        const title = patienceTitles[Math.floor(Math.random() * patienceTitles.length)];
 
         gifImage.src = gif;
         gifTitle.textContent = title;
-
         modal.style.display = "flex";
         }
 
-        /* confetti */
+        function createConfettiBurst(target) {
+        const rect = target.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
 
-        function createConfettiBurst(target){
-        const rect=target.getBoundingClientRect();
-        const x=rect.left+rect.width/2;
-        const y=rect.top+rect.height/2;
+        for (let i = 0; i < 28; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti";
+        piece.style.left = `${x}px`;
+        piece.style.top = `${y}px`;
 
-        for(let i=0;i<28;i++){
-        const piece=document.createElement("div");
-        piece.className="confetti";
-        piece.style.left=`${x}px`;
-        piece.style.top=`${y}px`;
+        const colors = ["#ff4d6d", "#ffbe0b", "#3a86ff", "#8338ec", "#2ecc71", "#ffffff"];
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
 
-        const colors=["#ff4d6d","#ffbe0b","#3a86ff","#8338ec","#2ecc71","#ffffff"];
-        piece.style.background=colors[Math.floor(Math.random()*colors.length)];
-
-        piece.style.setProperty("--dx",`${(Math.random()-0.5)*220}px`);
-        piece.style.setProperty("--dy",`${80+Math.random()*180}px`);
-        piece.style.setProperty("--rot",`${Math.random()*720-360}deg`);
+        piece.style.setProperty("--dx", `${(Math.random() - 0.5) * 220}px`);
+        piece.style.setProperty("--dy", `${80 + Math.random() * 180}px`);
+        piece.style.setProperty("--rot", `${Math.random() * 720 - 360}deg`);
 
         document.body.appendChild(piece);
-        piece.addEventListener("animationend",()=>piece.remove());
+        piece.addEventListener("animationend", () => piece.remove());
         }
         }
 
-        /* remember flipped cards */
-
-        const STORAGE_KEY="scotland-clues-flipped";
-        const SOLVED_STORAGE_KEY="scotland-clues-solved";
-        const ROW_MESSAGE_STORAGE_KEY="scotland-clues-row-message";
-        const MISTAKE_STORAGE_KEY="scotland-clues-mistakes";
-
-        function loadState(){
-        try{
-        return JSON.parse(localStorage.getItem(STORAGE_KEY))||{};
-        }catch{ return {}; }
-        }
-
-        function saveState(state){
-        localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-        }
-
-        function loadSolvedState(){
-        try{
-        return JSON.parse(localStorage.getItem(SOLVED_STORAGE_KEY))||{};
-        }catch{ return {}; }
-        }
-
-        function saveSolvedState(state){
-        localStorage.setItem(SOLVED_STORAGE_KEY,JSON.stringify(state));
-        }
-
-        function loadRowMessageState(){
-        try{
-        return JSON.parse(localStorage.getItem(ROW_MESSAGE_STORAGE_KEY))||{};
-        }catch{ return {}; }
-        }
-
-        function saveRowMessageState(state){
-        localStorage.setItem(ROW_MESSAGE_STORAGE_KEY,JSON.stringify(state));
-        }
-
-        function loadMistakeState(){
-        try{
-        const value = JSON.parse(localStorage.getItem(MISTAKE_STORAGE_KEY));
-        return Number.isFinite(value) ? value : 0;
-        }catch{ return 0; }
-        }
-
-        function saveMistakeState(value){
-        localStorage.setItem(MISTAKE_STORAGE_KEY, JSON.stringify(value));
-        }
-
-        const flippedState=loadState();
-
-        function normaliseText(text){
+        function normaliseText(text) {
         return text
         .toLowerCase()
         .normalize("NFD")
-        .replace(/[̀-ͯ]/g, "")
+        .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, " ")
         .trim();
         }
 
-        function levenshtein(a, b){
+        function levenshtein(a, b) {
         const m = a.length;
         const n = b.length;
         const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
 
-        for(let i = 0; i <= m; i++) dp[i][0] = i;
-        for(let j = 0; j <= n; j++) dp[0][j] = j;
+        for (let i = 0; i <= m; i++) dp[i][0] = i;
+        for (let j = 0; j <= n; j++) dp[0][j] = j;
 
-        for(let i = 1; i <= m; i++){
-        for(let j = 1; j <= n; j++){
+        for (let i = 1; i <= m; i++) {
+        for (let j = 1; j <= n; j++) {
         const cost = a[i - 1] === b[j - 1] ? 0 : 1;
         dp[i][j] = Math.min(
         dp[i - 1][j] + 1,
@@ -670,37 +694,37 @@
         return dp[m][n];
         }
 
-        function isCloseMatch(guess, candidate){
+        function isCloseMatch(guess, candidate) {
         const g = normaliseText(guess);
         const c = normaliseText(candidate);
 
-        if(!g || !c) return false;
-        if(g === c) return true;
-        if(c.includes(g) || g.includes(c)) return true;
+        if (!g || !c) return false;
+        if (g === c) return true;
+        if (c.includes(g) || g.includes(c)) return true;
 
         const distance = levenshtein(g, c);
         const threshold = c.length <= 6 ? 1 : c.length <= 12 ? 2 : 3;
         return distance <= threshold;
         }
 
-        function guessMatchesAnswer(guess, answerObj){
+        function guessMatchesAnswer(guess, answerObj) {
         return answerObj.aliases.some(alias => isCloseMatch(guess, alias));
         }
 
-        function showGuessResult(message, type){
+        function showGuessResult(message, type) {
         guessResult.className = `guess-result show ${type}`;
         guessResult.innerHTML = type === "error"
-        ? `<span class="devil">😈</span>Im going to make you regrett that mistake`
+        ? `<span class="devil">😈</span>I'm going to make you regret that mistake`
         : message;
         }
 
-        function updateMistakeCounter(){
+        function updateMistakeCounter() {
         mistakeCounter.textContent = `Mistakes: ${mistakeState}`;
         }
 
-        function replaceRowWithMessage(rowIndex, message){
+        function replaceRowWithMessage(rowIndex, message) {
         rowCards[rowIndex].forEach((card, index) => {
-        if(index === 0){
+        if (index === 0) {
         card.innerHTML = "";
         card.className = "row-span-message";
         card.textContent = message;
@@ -711,7 +735,7 @@
         });
         }
 
-        function populateGuessOptions(){
+        function populateGuessOptions() {
         rowLabels.forEach((label, index) => {
         const option = document.createElement("option");
         option.value = index;
@@ -720,136 +744,235 @@
         });
         }
 
-        function handleGuess(){
+        function areAllRowsSolved() {
+        return rowLabels.every((_, index) => rowSolvedState[index] === true);
+        }
+
+        function getAdventureStartDate() {
+        return new Date(2026, 3, 19, 0, 0, 0, 0);
+        }
+
+        function formatCountdown(ms) {
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        let finalAdventureButton = null;
+        let finalAdventureTimer = null;
+
+        function renderFinalAdventureButton() {
+        if (!areAllRowsSolved()) return;
+        if (finalAdventureButton) return;
+
+        finalAdventureButton = document.createElement("button");
+        finalAdventureButton.type = "button";
+        finalAdventureButton.className = "final-adventure-button";
+        grid.appendChild(finalAdventureButton);
+
+        function updateButtonText() {
+        const now = new Date();
+        const startDate = getAdventureStartDate();
+
+        if (now < startDate) {
+        finalAdventureButton.classList.add("locked");
+        finalAdventureButton.textContent = `Adventure starts in ${formatCountdown(startDate - now)}`;
+        finalAdventureButton.disabled = true;
+        } else {
+        finalAdventureButton.classList.remove("locked");
+        finalAdventureButton.textContent = "Start Adventure";
+        finalAdventureButton.disabled = false;
+        }
+        }
+
+        finalAdventureButton.addEventListener("click", () => {
+        const now = new Date();
+        const startDate = getAdventureStartDate();
+
+        if (now >= startDate) {
+        createConfettiBurst(finalAdventureButton);
+        finalAdventureButton.textContent = "Beginning...";
+        finalAdventureButton.disabled = true;
+
+        document.body.style.transition = "opacity 0.8s ease";
+        document.body.style.opacity = "0";
+
+        setTimeout(() => {
+        window.location.href = "adventure.html";
+        }, 1200);
+        }
+        });
+
+        updateButtonText();
+        finalAdventureTimer = setInterval(updateButtonText, 1000);
+        }
+
+        function revealAllAnswers() {
+        rowLabels.forEach((_, rowIndex) => {
+        if (!rowSolvedState[rowIndex]) {
+        const message = answers[rowIndex].reveal;
+        rowSolvedState[rowIndex] = true;
+        rowMessageState[rowIndex] = message;
+        replaceRowWithMessage(rowIndex, message);
+        }
+        });
+
+        saveSolvedState(rowSolvedState);
+        saveRowMessageState(rowMessageState);
+        renderFinalAdventureButton();
+        }
+
+        function handleGuess() {
         const rowIndex = Number(guessTarget.value);
         const guess = guessInput.value.trim();
 
-        if(!guess){
+        if (!guess) {
         showGuessResult("Type a guess first", "error");
         return;
         }
 
         const answerObj = answers[rowIndex];
 
-        if(guessMatchesAnswer(guess, answerObj)){
+        if (rowSolvedState[rowIndex]) {
+        showGuessResult("You've already solved that one", "error");
+        guessInput.value = "";
+        return;
+        }
+
+        if (guessMatchesAnswer(guess, answerObj)) {
         const message = answerObj.reveal;
         rowSolvedState[rowIndex] = true;
         rowMessageState[rowIndex] = message;
+
         saveSolvedState(rowSolvedState);
         saveRowMessageState(rowMessageState);
+
         replaceRowWithMessage(rowIndex, message);
         createConfettiBurst(rowCards[rowIndex][0]);
         showGuessResult(message, "success");
+        renderFinalAdventureButton();
         } else {
         mistakeState += 1;
         saveMistakeState(mistakeState);
         updateMistakeCounter();
+
+        if (!wrongGuessesState[rowIndex]) {
+        wrongGuessesState[rowIndex] = [];
+        }
+
+        wrongGuessesState[rowIndex].push({
+        guess: guess,
+        timestamp: new Date().toISOString()
+        });
+
+        saveWrongGuessesState(wrongGuessesState);
         showGuessResult("wrong", "error");
         }
+
+        guessInput.value = "";
         }
 
         populateGuessOptions();
         updateMistakeCounter();
+
         guessButton.addEventListener("click", handleGuess);
+        revealAllBtn.addEventListener("click", revealAllAnswers);
+
         guessInput.addEventListener("keydown", (event) => {
-        if(event.key === "Enter") handleGuess();
+        if (event.key === "Enter") handleGuess();
         });
 
-        /* build grid */
-
-        const emptyCell=document.createElement("div");
-        emptyCell.className="empty";
+        const emptyCell = document.createElement("div");
+        emptyCell.className = "empty";
         grid.appendChild(emptyCell);
 
-        for(let col=1; col<=clueCountPerRow; col++){
-        const label=document.createElement("div");
-        label.className="col-label";
-        label.textContent=`Clue ${col}`;
+        for (let col = 1; col <= clueCountPerRow; col++) {
+        const label = document.createElement("div");
+        label.className = "col-label";
+        label.textContent = `Clue ${col}`;
         grid.appendChild(label);
         }
 
-        rowLabels.forEach((label,rowIndex)=>{
-
-        const rowLabel=document.createElement("div");
-        rowLabel.className="row-label";
-        rowLabel.textContent=label;
+        rowLabels.forEach((label, rowIndex) => {
+        const rowLabel = document.createElement("div");
+        rowLabel.className = "row-label";
+        rowLabel.textContent = label;
         grid.appendChild(rowLabel);
 
-        for(let colIndex=0; colIndex<clueCountPerRow; colIndex++){
-
-        const clueIndex=rowIndex*clueCountPerRow+colIndex;
-        const unlockDate=startOfDay(clueDates[clueIndex]);
+        for (let colIndex = 0; colIndex < clueCountPerRow; colIndex++) {
+        const clueIndex = rowIndex * clueCountPerRow + colIndex;
+        const unlockDate = startOfDay(clueDates[clueIndex]);
 
         const isUnlocked = today >= unlockDate;
         const wasFlipped = flippedState[clueIndex] === true;
 
-        const card=document.createElement("div");
-        card.className="card";
+        const card = document.createElement("div");
+        card.className = "card";
         rowCards[rowIndex].push(card);
 
-        if(wasFlipped){
+        if (wasFlipped) {
         card.classList.add("flip");
         }
 
-        const inner=document.createElement("div");
-        inner.className="card-inner";
+        const inner = document.createElement("div");
+        inner.className = "card-inner";
 
-        const front=document.createElement("div");
-        front.className="card-face front " + (isUnlocked ? "unlocked" : "locked");
+        const front = document.createElement("div");
+        front.className = "card-face front " + (isUnlocked ? "unlocked" : "locked");
 
-        if(isUnlocked){
-        front.textContent="Reveal clue";
+        if (isUnlocked) {
+        front.textContent = "Reveal clue";
         } else {
-        front.textContent=`Unlocks on the ${formatDate(unlockDate)}`;
+        front.textContent = `Unlocks on the ${formatDate(unlockDate)}`;
         }
 
-        const back=document.createElement("div");
-        back.className="card-face back";
-        back.textContent=clues[clueIndex];
+        const back = document.createElement("div");
+        back.className = "card-face back";
+        back.textContent = clues[clueIndex];
 
         inner.appendChild(front);
         inner.appendChild(back);
         card.appendChild(inner);
 
-        if(rowSolvedState[rowIndex]){
+        if (rowSolvedState[rowIndex]) {
         replaceRowWithMessage(rowIndex, rowMessageState[rowIndex] || answers[rowIndex].reveal);
         } else {
-        card.addEventListener("click",()=>{
-
-        if(!isUnlocked){
+        card.addEventListener("click", () => {
+        if (!isUnlocked) {
         card.classList.remove("wiggle");
         void card.offsetWidth;
         card.classList.add("wiggle");
-        setTimeout(()=>card.classList.remove("wiggle"), 500);
+        setTimeout(() => card.classList.remove("wiggle"), 500);
         showPatienceGif();
         return;
         }
 
-        const nowFlipped=!card.classList.contains("flip");
+        const nowFlipped = !card.classList.contains("flip");
         card.classList.toggle("flip");
 
-        flippedState[clueIndex]=nowFlipped;
+        flippedState[clueIndex] = nowFlipped;
         saveState(flippedState);
 
-        if(nowFlipped){
+        if (nowFlipped) {
         createConfettiBurst(card);
         }
-
         });
         }
 
         grid.appendChild(card);
-
         }
 
-        if(rowSolvedState[rowIndex]){
+        if (rowSolvedState[rowIndex]) {
         replaceRowWithMessage(rowIndex, rowMessageState[rowIndex] || answers[rowIndex].reveal);
         }
-
         });
 
+        renderFinalAdventureButton();
     </script>
 
 </body>
 </html>
-
